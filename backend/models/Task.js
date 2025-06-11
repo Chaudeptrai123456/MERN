@@ -4,6 +4,7 @@ const todoSchema = new mongoose.Schema({
     completed:{type:Boolean,default:false},
     // assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] // Thêm trường này
 })
+  
 const TaskSchema = new mongoose.Schema({
         title:{type:String,required:true},
         description:{type:String},
@@ -12,7 +13,8 @@ const TaskSchema = new mongoose.Schema({
         dueDate:{type: Date,required:true},
         assignedTo:[{type:mongoose.Schema.Types.ObjectId,ref: "User"}],
         createBy:{type:mongoose.Schema.Types.ObjectId,ref: "User"},
-        attachments:[{type:String}],
+        // attachments:[{type:String}],
+        attachments: [{ type: mongoose.Schema.Types.Mixed }],
         todoCheckList: [todoSchema],
         process:{type: Number,default: 0}
     },{timestamps:true}

@@ -376,5 +376,45 @@ const updateTaskCheckList= async(req,res)=>{
         return res.status(500).json({ message: "Server error", error: err.message }); // Sửa typo và thêm return
     }
 }
-module.exports = {getDashboardData,getUserDashboardData,getTasks,getTaskById,createTask,updateTask,deleteTask,updateTaskStatus,updateTaskCheckList,getTaskByUserId}
+const uploadFile = async (req, res) => {
+    if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ message: 'Không có file tài liệu được tải lên hoặc định dạng không hợp lệ.' });
+    }
+
+    try {
+        const uploadedFiles = req.files.map(file => {
+            const downloadUrl = `https://res.cloudinary.com/tienanh/raw/upload/${file.filename}?fl_attachment=${encodeURIComponent(file.originalname)}`;
+            return {
+                originalname: file.originalname,
+                mimetype: file.mimetype,
+                size: file.size,
+                publicId: file.filename,
+                downloadUrl
+            };
+        });
+
+        const task = await Task.findById(req.params.id);
+        if (!task) {
+            return res.status(404).json({ message: "Không tìm thấy task" });
+        }
+
+        // Nếu attachments là array string trước đó, thì vẫn giữ lại rồi merge
+        const existing = Array.isArray(task.attachments) ? task.attachments : [];
+
+        task.attachments = [...existing, ...uploadedFiles];
+
+        await task.save();
+
+        return res.status(201).json({
+            message: "Đã upload tài liệu và lưu vào task thành công",
+            task
+        });
+
+    } catch (err) {
+        console.error('Lỗi khi xử lý file:', err);
+        res.status(500).json({ message: 'Lỗi máy chủ khi xử lý file', error: err.message });
+    }
+};
+
+module.exports = {uploadFile,getDashboardData,getUserDashboardData,getTasks,getTaskById,createTask,updateTask,deleteTask,updateTaskStatus,updateTaskCheckList,getTaskByUserId}
 
