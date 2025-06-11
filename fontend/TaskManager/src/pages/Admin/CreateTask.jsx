@@ -12,6 +12,7 @@ import SelectDropDown from '../../components/inputs/SelectDropDown'
 import SelectUser from '../../components/inputs/SelectUser'
 import ToDoListInput from '../../components/inputs/ToDoListInput'
 import AddAttachmentsInput from '../../components/inputs/AddAttachmentsInput'
+import axiosInstanceFormData from '../../utils/axiosInstanceFormData'
 const CreateTask = () => {
   const location = useLocation();
   const { taskId } = location.state || {};
@@ -97,16 +98,51 @@ const CreateTask = () => {
     setNewAssignedToName('');
     setNewAttachment(null);
   };
-
+const handleUploadFile = async (formData, id) => {
+  try {
+    for (let pair of formData.entries()) {
+  console.log('🧾 FormData content:', pair[0], pair[1]);
+}
+    const res = await axiosInstance.post(API_PATHS.TASK.UPLOAD_FILE(id), formData,{
+  headers: {
+    'Content-Type': 'multipart/form-data'
+  }
+});
+    if (res && res.data) {
+      console.log("Uploaded documents:", res.data.data);
+      toast.success("Tệp đính kèm đã được tải lên!");
+    }
+  } catch (err) {
+    console.log("Upload error: ", err);
+    toast.error("Lỗi khi tải tệp đính kèm.");
+  }
+};
   const createTask = async () => {
-    setLoading(true);
+    setLoading(true); 
+
     setError("");
     try {
+      const formData = new FormData();
+      const oldAttachments = [];
+      taskData.attachments.forEach(item => {
+      if (typeof item === "string") {
+        // Giữ lại link cũ
+        oldAttachments.push(item);
+      } else if (item instanceof File) {
+          // File mới: append vào formData (KHÔNG giữ lại trong attachments)
+          formData.append('attachments', item);
+        } 
+      });
+
+// Gán lại attachments chỉ còn link cũ
+      taskData.attachments = oldAttachments;
       const response = await axiosInstance.post(API_PATHS.TASK.CREATE_TASK, taskData);
       if (response && response.data) {
         toast.success("Task created successfully!");
-        clearData();
-        navigate('/admin/tasks');
+        console.log("teststs create task " + response.data.task);
+        handleUploadFile(formData,response.data.task._id)
+        // clearData();
+        // navigate('/admin/tasks');
       }
     } catch (err) {
       console.error("Error creating task:", err);
@@ -123,8 +159,9 @@ const CreateTask = () => {
     try {
       const response = await axiosInstance.put(API_PATHS.TASK.UPDATE_TASK(taskId), taskData);
       if (response && response.data) {
+        handleUploadFile()
         toast.success("Task updated successfully!");
-        navigate('/admin/tasks');
+        // navigate('/admin/tasks');
       }
     } catch (err) {
       console.error("Error updating task:", err);
@@ -166,17 +203,12 @@ const CreateTask = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!taskData.title.trim()) {
       setError("Task title is required.");
       toast.error("Task title is required.");
       return;
     }
-    // You can add more validation here
-
-      await createTask();
     if (isEditing) {
-      
       await updateTask();
     } else {
       await createTask();
