@@ -13,6 +13,10 @@ import SelectUser from '../../components/inputs/SelectUser'
 import ToDoListInput from '../../components/inputs/ToDoListInput'
 import AddAttachmentsInput from '../../components/inputs/AddAttachmentsInput'
 import axiosInstanceFormData from '../../utils/axiosInstanceFormData'
+import DeleteConfirmModal from '../../components/DeleteConfirmModal'
+import moment from 'moment'
+import Modal from '../../components/layouts/Modal'
+import DeleteAlert from '../../components/inputs/DeleteAlert'
 const CreateTask = () => {
   const location = useLocation();
   const { taskId } = location.state || {};
@@ -54,14 +58,21 @@ const CreateTask = () => {
     setError("");
     try {
       const response = await axiosInstance.get(API_PATHS.TASK.GET_TASK_BY_ID(id));
-      if (response && response.data && response.data.task) {
-        const fetchedTask = response.data.task;
+      console.log(response.data.assignedTo)
+      if (response) {
+        const fetchedTask = response.data;
+        const isoDate = new Date(fetchedTask.dueDate).toISOString(); 
+        console.log(fetchedTask.assignedTo)
+        const assignedToIds = fetchedTask.assignedTo 
+          ? fetchedTask.assignedTo.map(user => user._id) 
+          : [];
+        console.log(assignedToIds)
         setTaskData({
           title: fetchedTask.title || "",
           description: fetchedTask.description || "",
           priority: fetchedTask.priority || "Low",
-          dueDate: fetchedTask.dueDate ? formatDate(fetchedTask.dueDate) : "", // Sử dụng formatDate từ mock/utils
-          assignedTo: fetchedTask.assignedTo || [],
+          dueDate: fetchedTask.dueDate ? moment(fetchedTask.dueDate).format("YYYY-MM-DD"): "",
+          assignedTo: assignedToIds,
           todoCheckList: fetchedTask.todoCheckList || [],
           attachments: fetchedTask.attachments || []
         });
@@ -153,24 +164,41 @@ const handleUploadFile = async (formData, id) => {
     }
   };
 
-  const updateTask = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const response = await axiosInstance.put(API_PATHS.TASK.UPDATE_TASK(taskId), taskData);
-      if (response && response.data) {
-        handleUploadFile()
-        toast.success("Task updated successfully!");
-        // navigate('/admin/tasks');
+const updateTask = async () => {
+  setLoading(true);
+  setError("");
+  try {
+    const formData = new FormData();
+    const oldAttachments = [];
+    const isoDate = new Date(taskData.dueDate).toISOString(); 
+    taskData.attachments.forEach(item => {
+      if (typeof item === "string") {
+        oldAttachments.push(item);
+      } else if (item instanceof File) {
+        formData.append('attachments', item);
       }
-    } catch (err) {
-      console.error("Error updating task:", err);
-      setError("Failed to update task.");
-      toast.error("Failed to update task.");
-    } finally {
-      setLoading(false);
+    });
+    // Cập nhật lại taskData.attachments trước khi gửi request PUT
+    const updatedTaskData = { ...taskData, attachments: oldAttachments };
+    console.log(API_PATHS.TASK.UPDATE_TASK(taskId))
+    console.log(updatedTaskData)
+    const response = await axiosInstance.put(API_PATHS.TASK.UPDATE_TASK(taskId), updatedTaskData).catch(err=>console.log(err.message));
+    if (response && response.data) {
+      // Chỉ upload file nếu có file mới
+      if (formData.entries().next().done === false) { // Check if formData is not empty
+         await handleUploadFile(formData, taskId); // Truyền taskId vào đây
+      }
+      toast.success("Task updated successfully!");
+      // navigate('/admin/tasks');
     }
-  };
+  } catch (err) {
+    console.error("Error updating task:", err);
+    setError("Failed to update task.");
+    toast.error("Failed to update task.");
+  } finally {
+    setLoading(false);
+  }
+};
     const handleMouseLeaveAvatar = () => {
     setHoveredUser(null);
   };
@@ -185,7 +213,7 @@ const handleUploadFile = async (formData, id) => {
     });
   };
   const deleteTask = async () => {
-    setLoading(true);
+    setOpenDeleteAlert(true)
     setError("");
     try {
       await axiosInstance.delete(API_PATHS.TASK.DELETE_TASK(taskId));
@@ -214,58 +242,6 @@ const handleUploadFile = async (formData, id) => {
       await createTask();
     }
   };
-
-  // --- Hàm xử lý cho Todo Checklist ---
-  const handleAddTodo = () => {
-    if (newTodoText.trim()) {
-      setTaskData(prevData => ({
-        ...prevData,
-        todoCheckList: [...prevData.todoCheckList, { _id: Date.now().toString(), text: newTodoText.trim(), completed: false }]
-      }));
-      setNewTodoText('');
-    }
-  };
-
-  const handleToggleTodo = (id) => {
-    setTaskData(prevData => ({
-      ...prevData,
-      todoCheckList: prevData.todoCheckList.map(todo =>
-        todo._id === id ? { ...todo, completed: !todo.completed } : todo
-      )
-    }));
-  };
-
-  const handleRemoveTodo = (id) => {
-    setTaskData(prevData => ({
-      ...prevData,
-      todoCheckList: prevData.todoCheckList.filter(todo => todo._id !== id)
-    }));
-  };
-
-  // --- Hàm xử lý cho Assigned To (đơn giản, có thể phát triển thêm) ---
-  const handleAddAssignedTo = () => {
- 
-  };
-
-  const handleRemoveAssignedTo = (id) => {
-    setTaskData(prevData => ({
-      ...prevData,
-      assignedTo: prevData.assignedTo.filter(member => member.id !== id)
-    }));
-  };
-
-  // --- Hàm xử lý cho Attachments (đơn giản, chỉ hiển thị tên file) ---
-  const handleFileChange = (e) => {
-  };
-
-  const handleRemoveAttachment = (name) => {
-    setTaskData(prevData => ({
-      ...prevData,
-      attachments: prevData.attachments.filter(att => att.name !== name)
-    }));
-  };
-
-
   return (
     <DashBoardLayout activeMenu={isEditing ? "Edit Task" : "Create Task"}>
       <div className='mt-5'>
@@ -276,10 +252,10 @@ const handleUploadFile = async (formData, id) => {
                 {taskId ? "Update Task" : "Create Task"}
               </h2>
               {
-                !taskId && (
+                taskId && (
                   <button
                     className='flex items-center gap-1.5 text-[13px] font-medium text-rose-500 bg-rose-50 rounded px-2 py-1 border border-rose-100 hover:border-rose-300 cursor-pointer'
-                    onClick={()=>setOpenDeleteAlert(true)}
+                    onClick={() => setOpenDeleteAlert(true)}
                   >
                     <LuTrash2 className='text-base'/>
                   </button>
@@ -344,6 +320,7 @@ const handleUploadFile = async (formData, id) => {
               </div>
               <div className=''>
                 <label className='w-full'>Assigned To</label>
+
                 <SelectUser 
                   selectedUser = {taskData.assignedTo}
                   setSelectedUsers = {(value)=>{
@@ -392,7 +369,18 @@ const handleUploadFile = async (formData, id) => {
         </div>
         </div>
       </div>
+        <Modal 
+          isOpen={openDeleteAlert}
+          onClose={()=>{setOpenDeleteAlert(false)}}
+          title="Delete Task"
+        >
+          <DeleteAlert 
+            content="Are you sure wanna  to delete this task ???"
+            onDelete={()=>deleteTask()}
+          />
+        </Modal>
     </DashBoardLayout>
+
   );
 }
 

@@ -31,7 +31,6 @@ const Login = () => {
       const {tokenAccess , role} = res.data;
       if (tokenAccess) {
         localStorage.setItem("token",tokenAccess)
-        console.log(res.data)
         updateUser(res.data)
       }
       if (role === "admin") {

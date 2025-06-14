@@ -42,15 +42,15 @@ const SignUp = () => {
           password,
           adminInviteToken
         })
-        const {tokenAccess,role} = res.data;
-        if (tokenAccess) {
+        const {token,role} = res.data;
+        if (token) {
           if (profilePic) {
             let res =  await uploadImage(token); // Gọi hàm uploadImage với token
           } else {
             console.log("No profile picture selected, skipping upload.");
           }
           
-          localStorage.setItem("token",tokenAccess)
+          localStorage.setItem("token",token)
           updateUser(res.data)
 
         }
@@ -60,11 +60,11 @@ const SignUp = () => {
             navigate("/user/dashboard")
         }
       } catch(error) {
-      //   if (error.res && error.res.data.message) {
-      //   setError(error.res.data.message)
-      // } else {
-      //   setError("Something went wrong. Please try again later")
-      // }
+        if (error.res && error.res.data.message) {
+        setError(error.res.data.message)
+      } else {
+        setError("Something went wrong. Please try again later")
+      }
       }
     }
   const uploadImage=async(token)=> {

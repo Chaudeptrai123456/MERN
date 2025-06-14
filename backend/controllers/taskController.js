@@ -171,7 +171,7 @@ const getUserDashboardData = async (req, res) => {
     } catch (err) {
         // Xử lý lỗi và trả về phản hồi
         console.error("Error in getUserDashboardData:", err); // Log lỗi chi tiết
-        return res.status(500).json({ message: "Server error", error: err.message }); // Sửa typo và thêm return
+        return res.status(500).json({ message: "Server error", getTaskserror: err.message }); // Sửa typo và thêm return
     }
 };
 const getTasks= async(req,res)=>{
@@ -196,7 +196,7 @@ const getTasks= async(req,res)=>{
         tasks = await Promise.all(
             tasks.map(async(task)=>{
                 const completedCount = task.todoCheckList.filter(
-                    (item)=>item.complete
+                    (item)=>item.completed === true
                 ).length;
                 return {...task._doc,completedCount:completedCount}
             })
@@ -219,10 +219,10 @@ const getTasks= async(req,res)=>{
         
         const completedTasks = await Task.countDocuments({
             ...filter,
-            status:"completed",
+            status:"Completed",
             ...(req.user.role !== "admin") && {assignedTo:req.user._id}
         })
-        res.json({
+            res.json({
             tasks,
             statusSummary: {
                 all: allTask,
@@ -269,6 +269,7 @@ const createTask= async(req,res)=>{
             assignedTo,
             attachments,
             todoCheckList,
+            progress:0,
             createBy: req.user._id
         });
         res.status(201).json({message:"Task has created",task})
@@ -287,6 +288,10 @@ const updateTask= async(req,res)=>{
         task.dueDate = req.body.dueDate || task.dueDate
         task.todoCheckList = req.body.todoCheckList || task.todoCheckList
         task.attachments = req.body.attachments || task.attachments
+        const countCompletedTodo =    task.todoCheckList.filter(
+                    (item)=>item.completed === true
+                ).length
+        task.process = countCompletedTodo/task.todoCheckList.length*100;
         if (req.body.assignedTo) {
             if (!Array.isArray(req.body.assignedTo)) {
                 return res.status(400).json({message:"assignedTo must be an array"})
@@ -296,6 +301,7 @@ const updateTask= async(req,res)=>{
         const updateTask = await task.save()
         res.status(200).json({message: "Task has been updated successfully",updateTask})
     }catch(err) {
+        console.log(err.message)
         return res.status(500).json({ message: "Server error", error: err.message }); // Sửa typo và thêm return
     }
 }
@@ -334,7 +340,7 @@ const updateTaskStatus= async(req,res)=>{
             } else {
                 task.process = 0;  
             }
-        }
+        } 
         await task.save()
         return res.status(200).json({message:"Task has been updated ",task})
     }catch(err) {

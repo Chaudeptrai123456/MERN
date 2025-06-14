@@ -6,14 +6,15 @@ import Modal from '../layouts/Modal';
 
 const SelectUser = ({ selectedUser, setSelectedUsers }) => {
   const [allUsers, setAllUsers] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false); // Ban đầu đặt là false
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [tempSelectedUser, setTempSelectedUser] = useState([]);
+
   const handleCancel = () => {
-    setTempSelectedUser([]); // Xóa hết tất cả các lựa chọn tạm thời
-    setSelectedUsers([]); // Vui lòng xem lại comment ở đây trong phản hồi trước để quyết định có nên giữ dòng này không.
+    setTempSelectedUser([]);
+    setSelectedUsers([]);
     setIsModalOpen(false);
   };
-  // Lấy tất cả người dùng từ API
+
   const getAllUsers = async () => {
     try {
       const response = await axiosInstance.get(API_PATHS.USER.GET_ALL_USERS);
@@ -25,7 +26,6 @@ const SelectUser = ({ selectedUser, setSelectedUsers }) => {
     }
   };
 
-  // Hàm xử lý khi tick/untick checkbox người dùng
   const toggleUserSelection = (userId) => {
     setTempSelectedUser((prev) => {
       if (prev.includes(userId)) {
@@ -36,49 +36,39 @@ const SelectUser = ({ selectedUser, setSelectedUsers }) => {
     });
   };
 
-  // Hàm xử lý khi người dùng nhấn "Assign" trong modal
   const handleAssign = () => {
-    setIsModalOpen(false); // Đóng modal
-    setSelectedUsers(tempSelectedUser); // Cập nhật danh sách người dùng được chọn chính thức
+    setIsModalOpen(false);
+    setSelectedUsers(tempSelectedUser);
   };
 
-  // Lấy URL avatar của những người dùng đã được chọn (từ props selectedUser)
-  // và chỉ lấy tối đa 5 người đầu tiên
   const selectedUserAvatars = allUsers
     .filter((user) => selectedUser.includes(user._id))
-    .slice(0, 5) // Chỉ lấy 5 người đầu tiên
+    .slice(0, 5)
     .map((user) => user.profileImageUrl);
 
-  // useEffect để gọi API khi component mount
   useEffect(() => {
     getAllUsers();
   }, []);
 
-  // useEffect để đồng bộ tempSelectedUser khi selectedUser từ props thay đổi
-  // hoặc khi modal được mở (để đảm bảo trạng thái checkbox là đúng)
   useEffect(() => {
-    // Luôn khởi tạo tempSelectedUser dựa trên selectedUser khi modal mở
-    // hoặc khi selectedUser bên ngoài thay đổi.
     setTempSelectedUser(selectedUser ? [...selectedUser] : []);
   }, [selectedUser, isModalOpen]);
 
   return (
     <div className='space-y-4 mt-2'>
-      {/* Nút "Add Member" - luôn hiển thị */}
       <button
-        className='card-btn whitespace-nowrap' // Đảm bảo class này có whitespace-nowrap
-        onClick={() => setIsModalOpen(true)} // Mở modal khi click
+        className='card-btn whitespace-nowrap'
+        onClick={() => setIsModalOpen(true)}
       >
         <LuUsers className='text-sm' /> Add Member
       </button>
 
-      {/* Khu vực hiển thị avatar của người dùng đã chọn */}
-      {selectedUserAvatars.length > 0 && (
+      {selectedUser.length > 0 && (
         <div className="flex items-center space-x-2 mt-2">
-          {selectedUserAvatars.map((avatarUrl, index) => (
+          {selectedUser.map((avatarUrl, index) => (
             <img
-              key={index} // Sử dụng index làm key tạm thời nếu _id không tiện (nhưng _id của user tốt hơn)
-              src={avatarUrl || "https://placehold.co/32x32"} // Placeholder nếu ảnh không tồn tại
+              key={index}
+              src={avatarUrl || "https://placehold.co/32x32"}
               alt={`Selected Member ${index + 1}`}
               className="w-8 h-8 rounded-full object-cover border border-gray-300"
             />
@@ -89,15 +79,10 @@ const SelectUser = ({ selectedUser, setSelectedUsers }) => {
         </div>
       )}
 
-
-      {/* Modal để chọn người dùng */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          // Quan trọng: Nếu người dùng đóng modal mà không nhấn Assign,
-          // thì các thay đổi tạm thời trong tempSelectedUser phải được hủy bỏ
-          // để modal lần sau mở ra đúng với trạng thái selectedUser chính thức
           setTempSelectedUser(selectedUser ? [...selectedUser] : []);
         }}
         title="Select Users"
@@ -111,7 +96,7 @@ const SelectUser = ({ selectedUser, setSelectedUsers }) => {
             >
               {/* Avatar */}
               <img
-                src={user.profileImageUrl || "https://placehold.co/28x2828"}
+                src={user.profileImageUrl || "https://placehold.co/28x28"}
                 alt={user.name}
                 className="w-5 h-5 rounded-full object-cover"
               />
@@ -124,7 +109,6 @@ const SelectUser = ({ selectedUser, setSelectedUsers }) => {
               <input
                 type="checkbox"
                 checked={tempSelectedUser.includes(user._id)}
-                // onChange cần được giữ lại để đảm bảo accessibility và hoạt động chuẩn của checkbox
                 onChange={() => toggleUserSelection(user._id)}
                 className="w-4 h-4 accent-blue-600"
               />
@@ -134,8 +118,8 @@ const SelectUser = ({ selectedUser, setSelectedUsers }) => {
 
         {/* Thêm nút "Assign" ở chân modal */}
         <div className='flex justify-end p-4 border-t gap-4'>
-             <button
-        className='px-4 py-2 bg-white text-gray-700 rounded-md border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2'
+          <button
+            className='px-4 py-2 bg-white text-gray-700 rounded-md border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2'
             onClick={handleCancel}
           >
             Cancel

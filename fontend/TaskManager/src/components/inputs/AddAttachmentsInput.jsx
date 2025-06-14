@@ -110,30 +110,48 @@ export default function AddAttachmentsInput({ attachments, setAttachments }) {
   };
 
   const showAttachment = (item) => {
-    if (typeof item === 'string') {
-      return (
-        <a
-          href={item}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-blue-600 underline break-all"
-        >
-          {item}
-        </a>
-      );
-    }
-    if (item instanceof File) {
-      return (
-        <span className="text-xs text-black">
-          {item.name} ({Math.round(item.size / 1024)} KB)
-        </span>
-      );
-    }
-    return null;
-  };
+  if (typeof item === 'string') {
+    return (
+      <a
+        href={item}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-xs text-blue-600 underline break-all"
+      >
+        {item}
+      </a>
+    );
+  }
+
+  // Nếu là File (chưa upload)
+  if (item instanceof File) {
+    return (
+      <span className="text-xs text-black">
+        {item.name} ({Math.round(item.size / 1024)} KB)
+      </span>
+    );
+  }
+
+  // Nếu là object có downloadUrl (đã upload xong)
+  if (typeof item === 'object' && item.downloadUrl) {
+    return (
+      <a
+        href={item.downloadUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-xs text-blue-600 underline break-all"
+      >
+        {item.originalname || 'File đính kèm'}
+      </a>
+    );
+  }
+
+  return null;
+};
 
   return (
     <div>
+
       {attachments.map((item, idx) => (
         <div
           key={idx}
@@ -141,6 +159,7 @@ export default function AddAttachmentsInput({ attachments, setAttachments }) {
         >
           <div className="flex-1 flex items-center gap-3 border border-gray-100">
             <LuPaperclip className="text-gray-400" />
+
             {showAttachment(item)}
           </div>
           <button className="cursor-pointer" onClick={() => handleDelete(idx)} type="button">
