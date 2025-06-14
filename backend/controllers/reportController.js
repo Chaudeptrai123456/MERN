@@ -24,7 +24,7 @@ const exportTasksReport = async(req,res)=>{
                 priority: task.priority,
                 status: task.status,
                 dueDate: task.dueDate.toString().split("T")[0],
-                assignedTo: task.assignedTo || "Unassigned"
+                assignedTo: task.assignedTo.map(user => user.name).join(", ") || "Unassigned"
             })
         })
         res.setHeader(

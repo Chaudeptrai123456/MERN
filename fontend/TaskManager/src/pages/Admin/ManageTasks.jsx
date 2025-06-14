@@ -56,9 +56,35 @@ const getAllTask = async () => {
   const handleClick= async(taskData)=>{
     navigate('/admin/createtask',{state:{taskId:taskData._id}});
   }
-  const handleDownloadReport = async ()=>{
-    
+
+  const handleDownloadReport = async () => {
+  try {
+    const res = await axiosInstance.get(API_PATHS.REPORT.EXPORT_TASKS, {
+      responseType: 'blob', // ⚠️ Rất quan trọng!
+    });
+
+    // Tạo link tải xuống từ blob
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement('a');
+    link.href = url;
+
+    // Tên file tải về
+    link.setAttribute('download', 'tasks_report.xlsx');
+
+    // Kích hoạt tải xuống
+    document.body.appendChild(link);
+    link.click();
+
+    // Cleanup
+    link.remove();
+    window.URL.revokeObjectURL(url);
+
+  } catch (err) {
+    console.error(err);
+    setError(err);
   }
+};
+
 useEffect(() => {
   getAllTask()
 }, [filterStatus])

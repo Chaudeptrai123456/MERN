@@ -20,10 +20,24 @@ const ManageUser = () => {
     getAllUser()
     return ()=>{}
   },[])
+  const handleDonwloadReport = async()=>{}
   return (
     <DashBoardLayout activeMenu="Team Members" > 
-    {JSON.stringify(allUser)}
-      ManageUsers       
+      <div className='mt-5 mb-10'>
+              <div className='flex items-center justify-between gap-3'>
+                <h2 className='text-xl md:text-xl font-medium'>My Tasks</h2>
+                  <button
+                    className='lg:flex download-btn'
+                    onClick={handleDonwloadReport}
+                  >
+                    Download Report
+                  </button>
+              </div>
+        <div className=''>
+
+        </div>
+      </div>
+
     </DashBoardLayout>
   )
 }
