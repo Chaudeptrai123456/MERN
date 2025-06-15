@@ -45,7 +45,7 @@ function App() {
                         {/* Hiện tại, PrivateRoute này chỉ cho phép admin, nên các route user sẽ không hoạt động nếu user không phải admin */}
                         <Route element={<PrivateRoute allowedRoles={["user", "admin"]} />}> {/* Sửa lại allowedRoles nếu user có thể truy cập */}
                             <Route path="/user/dashboard" element={<UserDashBoard />} />
-                            <Route path="/user/my-task" element={<MyTask />} />
+                            <Route path="/user/my-tasks" element={<MyTask />} />
                             <Route path="/user/task-details/:id" element={<ViewTaskDetail />} />
                         </Route>
                     </Routes>

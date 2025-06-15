@@ -1,9 +1,10 @@
 const mongoose = require("mongoose")
 const todoSchema = new mongoose.Schema({
+      _id: { type: String }, // 👈 Cho phép dùng string ID
     text:{type:String,required:true},
     completed:{type:Boolean,default:false},
     // assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] // Thêm trường này
-})
+} )
   
 const TaskSchema = new mongoose.Schema({
         title:{type:String,required:true},

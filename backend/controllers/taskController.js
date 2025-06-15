@@ -259,7 +259,7 @@ const createTask= async(req,res)=>{
             attachments,
             todoCheckList
         } = req.body;
-        console.log("create task " +JSON.stringify(req.body))
+        console.log("create task " +JSON.stringify(req.body.assignedTo))
         if (!Array.isArray(assignedTo)) return res.status(400).json({ message: "Assigned to must be an array" });
         const task = await Task.create({
             title,
@@ -281,6 +281,7 @@ const createTask= async(req,res)=>{
 const updateTask= async(req,res)=>{
     try {
         const task = await Task.findById(req.params.id)
+        console.log("task " + JSON.stringify(task))
         if (!task) return res.status(404).json({message:"Task not found"})
         task.title = req.body.title || task.title
         task.description = req.body.description || task.description
@@ -292,6 +293,12 @@ const updateTask= async(req,res)=>{
                     (item)=>item.completed === true
                 ).length
         task.process = countCompletedTodo/task.todoCheckList.length*100;
+        console.log(task.process)
+        if (task.process === 100) {
+            task.status = "Completed"
+        } else if (task.process > 0  ) {
+            task.status = "In Progress"
+        }
         if (req.body.assignedTo) {
             if (!Array.isArray(req.body.assignedTo)) {
                 return res.status(400).json({message:"assignedTo must be an array"})
