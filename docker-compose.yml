@@ -1,0 +1,44 @@
+version: '3.9'
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    mem_limit: 512m
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: chau
+      MONGO_INITDB_ROOT_PASSWORD: 123
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: [ "CMD", "mongosh", "--eval", "db.runCommand({ ping: 1 })" ]
+      interval: 5s
+      timeout: 2s
+      retries: 60
+    # volumes:
+    #   - mongo_data:/data/db
+    #   - ./mongod.conf:/etc/mongod.conf  
+
+  backend:
+    build: ./backend
+    container_name: backend
+    ports:
+      - "9999:9999"
+    # environment:
+      # - MONGO_URI=mongodb://root:example@mongo:27017/mydb?authSource=admin
+    depends_on:
+      - mongodb
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+  frontend:
+    build: ./fontend/TaskManager
+    container_name: task-frontend
+    ports:
+      - '5173:5173'
+    depends_on:
+      - backend
+    environment:
+      - NODE_ENV=production
+    restart: always
+volumes:
+  mongo-data:

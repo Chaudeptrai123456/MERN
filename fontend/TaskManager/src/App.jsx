@@ -16,7 +16,7 @@ import ManageUser from "./pages/Admin/ManageUser";
 import UserDashBoard from "./pages/User/UserDashBoard";
 import MyTask from "./pages/User/MyTask";
 import ViewTaskDetail from "./pages/User/ViewTaskDetail";
-import UserProvider, { UserContext } from "./context/userContext"; // Import đúng cách
+import { UserContext,UserProvider } from "./context/userContext"; // Import đúng cách
 import { Toaster } from "react-hot-toast";
 
 function App() {
