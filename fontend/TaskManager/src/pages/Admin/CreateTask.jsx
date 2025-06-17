@@ -180,8 +180,6 @@ const updateTask = async () => {
     });
     // Cập nhật lại taskData.attachments trước khi gửi request PUT
     const updatedTaskData = { ...taskData, attachments: oldAttachments };
-    console.log(API_PATHS.TASK.UPDATE_TASK(taskId))
-    console.log(updatedTaskData)
     const response = await axiosInstance.put(API_PATHS.TASK.UPDATE_TASK(taskId), updatedTaskData).catch(err=>console.log(err.message));
     if (response && response.data) {
       // Chỉ upload file nếu có file mới

@@ -10,6 +10,7 @@ import { PRIORITY_DATA } from '../../utils/data'
 import SelectUser from '../../components/inputs/SelectUser'
 import ToDoListInput from '../../components/inputs/ToDoListInput'
 import AddAttachmentsInput from '../../components/inputs/AddAttachmentsInput'
+import toast from 'react-hot-toast'
 const ViewTaskDetail = () => {
   const { id } = useParams(); // Lưu ý: phải gọi useParams()
   const [taskData, setTaskData] = useState({
@@ -78,7 +79,29 @@ const ViewTaskDetail = () => {
     });
     setError("");
   };
-  const handeleSubmit =async ()=>{}
+  const handeleSubmit =async ()=>{
+    try {
+      console.log(JSON.stringify(taskData.todoCheckList))
+      await axiosInstance.put(API_PATHS.TASK.UPDATE_TODO_CHECKlIST(id),{todoCheckList:taskData.todoCheckList}).then(()=>
+        {
+            toast.success("update Task successfully")      
+        }
+      ).catch(err=>{
+        toast.error(err.message)
+      })
+    }catch(err) {
+      setError(err)
+    }
+  }
+  const handleValueChange = (key, value) => {
+    if (key === "todoCheckList") {
+      console.log(value)
+      setTaskData((prevData) => ({ ...prevData, [key]: value }));
+    } else {
+      setError("Only admin can update it")
+    }
+  };
+
   return (
     <DashBoardLayout activeMenu="Task Detail">
         <div className='mt-5'>

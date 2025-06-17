@@ -359,8 +359,6 @@ const updateTaskCheckList= async(req,res)=>{
         const {todoCheckList} = req.body;
         const task = await Task.findById(req.params.id);
         if (!task) return res.status(404).json({message:"Task not found"})
-        console.log(task)
-        console.log("userId " + req.user._id)
         const isAssignedToTask = task.assignedTo.some(
             (userId) => userId.toString() === req.user._id.toString()
         );
