@@ -1,0 +1,13 @@
+.env
+node_modules
+mongod.conf
+# Ignore log files
+*.log
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore build folders
+dist/
+build/
